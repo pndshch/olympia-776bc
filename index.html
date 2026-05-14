@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Olympia 776 BC — 古代オリンピア競技祭</title>
+<meta name="description" content="776 BC 古代オリンピア — スタディオン走・円盤投・やり投・幅跳び・パンクラチオンで栄冠を目指せ！">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --terracotta:#C65D3E;--terracotta-dk:#8B3A22;
+  --olive:#6B7F3B;--olive-lt:#8FA34E;
+  --cream:#F5E6CA;--marble:#EDE0CC;
+  --gold:#D4A947;--gold-lt:#F0D080;
+  --dark:#2C1810;--dark2:#3D2418;
+  --sky:#87CEEB;--sky-dk:#5BA3C9;
+  --sand:#D2B48C;
+}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Georgia','Times New Roman',serif;background:var(--dark)}
+canvas{display:block;margin:0 auto;image-rendering:auto}
+
+/* UI overlay */
+#ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#ui>*{pointer-events:auto}
+
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;width:100%;max-width:480px}
+.screen.active{display:flex}
+
+.title-text{font-size:clamp(28px,6vw,48px);color:var(--gold);text-shadow:2px 2px 4px rgba(0,0,0,0.6);margin-bottom:4px;font-weight:bold;letter-spacing:2px}
+.subtitle{font-size:clamp(14px,3vw,20px);color:var(--cream);opacity:0.85;margin-bottom:6px}
+.year-text{font-size:clamp(18px,4vw,28px);color:var(--terracotta);font-weight:bold;margin-bottom:24px;letter-spacing:4px}
+
+.btn{
+  background:linear-gradient(180deg,var(--terracotta),var(--terracotta-dk));
+  color:var(--cream);border:2px solid var(--gold);
+  padding:12px 36px;font-size:clamp(16px,3.5vw,22px);
+  border-radius:8px;cursor:pointer;font-family:inherit;
+  text-shadow:1px 1px 2px rgba(0,0,0,0.4);
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);
+  transition:transform 0.15s,box-shadow 0.15s;
+  margin:6px;letter-spacing:1px;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.5)}
+.btn:active{transform:translateY(1px)}
+.btn-small{padding:8px 20px;font-size:clamp(12px,2.5vw,16px)}
+
+.info-text{color:var(--cream);font-size:clamp(12px,2.5vw,16px);line-height:1.6;max-width:400px;margin:12px 0;opacity:0.9}
+.info-text em{color:var(--gold);font-style:normal}
+
+.event-list{list-style:none;margin:16px 0;width:100%}
+.event-item{
+  background:rgba(44,24,16,0.7);border:1px solid var(--gold);
+  border-radius:8px;padding:10px 16px;margin:6px 0;
+  color:var(--cream);font-size:clamp(13px,2.8vw,17px);
+  cursor:pointer;transition:background 0.15s,transform 0.15s;
+  display:flex;align-items:center;gap:10px;
+}
+.event-item:hover{background:rgba(198,93,62,0.3);transform:translateX(4px)}
+.event-item .icon{font-size:24px;flex-shrink:0}
+.event-item .name{flex:1;text-align:left}
+.event-item .score{color:var(--gold);font-size:clamp(11px,2.2vw,14px)}
+.event-item.completed{border-color:var(--olive-lt)}
+.event-item.completed .score{color:var(--olive-lt)}
+
+.meander{
+  width:80%;max-width:300px;height:12px;
+  background:repeating-linear-gradient(90deg,var(--gold) 0 4px,transparent 4px 8px,var(--gold) 8px 12px,transparent 12px 20px);
+  opacity:0.4;margin:10px auto;
+}
+
+.hud{
+  position:absolute;top:0;left:0;width:100%;
+  padding:8px 16px;display:flex;justify-content:space-between;align-items:center;
+  background:linear-gradient(180deg,rgba(44,24,16,0.85),transparent);
+  color:var(--cream);font-size:clamp(12px,2.5vw,16px);
+  pointer-events:none;
+}
+.hud-event{color:var(--gold);font-weight:bold}
+.hud-score{color:var(--gold-lt)}
+.hud-instruction{
+  position:absolute;bottom:60px;left:50%;transform:translateX(-50%);
+  background:rgba(44,24,16,0.85);border:1px solid var(--gold);
+  border-radius:8px;padding:8px 20px;
+  color:var(--cream);font-size:clamp(13px,2.8vw,17px);
+  white-space:nowrap;pointer-events:none;
+  animation:pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:0.8}50%{opacity:1}}
+
+.result-box{
+  background:rgba(44,24,16,0.85);border:2px solid var(--gold);
+  border-radius:12px;padding:20px;margin:12px 0;width:100%;max-width:360px;
+}
+.result-medal{font-size:48px;margin-bottom:8px}
+.result-record{font-size:clamp(22px,5vw,36px);color:var(--gold);font-weight:bold}
+.result-label{font-size:clamp(12px,2.5vw,15px);color:var(--cream);opacity:0.7;margin-top:4px}
+
+.lang-sw{
+  position:fixed;top:8px;right:8px;z-index:100;
+  display:flex;gap:2px;background:rgba(44,24,16,0.8);
+  border:1px solid var(--gold);border-radius:6px;padding:2px;
+  pointer-events:auto;
+}
+.lang-sw button{
+  background:transparent;border:none;color:var(--cream);
+  font-size:11px;padding:3px 8px;border-radius:4px;cursor:pointer;
+  opacity:0.6;font-family:inherit;
+}
+.lang-sw button.active{background:var(--terracotta);opacity:1}
+
+.history-box{
+  background:rgba(44,24,16,0.7);border:1px solid var(--terracotta);
+  border-radius:8px;padding:12px 16px;margin:12px 0;
+  color:var(--cream);font-size:clamp(11px,2.2vw,14px);
+  line-height:1.7;text-align:left;width:100%;max-width:400px;
+}
+.history-box h3{color:var(--gold);font-size:clamp(13px,2.8vw,17px);margin-bottom:6px}
+
+#game-canvas{background:var(--dark)}
+</style>
+</head>
+<body>
+<canvas id="game-canvas"></canvas>
+<div id="ui">
+  <div class="lang-sw">
+    <button id="btn-ja" class="active" onclick="setLang('ja')">JP</button>
+    <button id="btn-en" onclick="setLang('en')">EN</button>
+  </div>
+
+  <!-- Title -->
+  <div class="screen active" id="scr-title">
+    <div class="title-text">ΟΛΥΜΠΙΑ</div>
+    <div class="subtitle" data-i18n="subtitle">古代オリンピア競技祭</div>
+    <div class="year-text">776 BC</div>
+    <div class="meander"></div>
+    <div class="history-box">
+      <h3 data-i18n="histTitle">歴史的背景</h3>
+      <p data-i18n="histBody">紀元前776年、ペロポネソス半島のオリンピアで最初の競技祭が記録された。4年ごとに開催され、ギリシャ全土から選手が集まった。競技中は戦争も休戦（エケケイリア）となり、勝者にはオリーブの冠が与えられた。</p>
+    </div>
+    <button class="btn" onclick="showEvents()" data-i18n="btnStart">競技に挑む</button>
+    <div class="info-text" data-i18n="mobileHint">タップ・スワイプで操作 — モバイル対応</div>
+  </div>
+
+  <!-- Event select -->
+  <div class="screen" id="scr-events">
+    <div class="title-text" style="font-size:clamp(22px,5vw,34px)" data-i18n="chooseEvent">競技を選べ</div>
+    <div class="meander"></div>
+    <ul class="event-list" id="event-list"></ul>
+    <div class="meander"></div>
+    <button class="btn btn-small" onclick="showTitle()" data-i18n="btnBack">戻る</button>
+  </div>
+
+  <!-- In-game HUD -->
+  <div class="hud" id="hud" style="display:none">
+    <span class="hud-event" id="hud-event"></span>
+    <span class="hud-score" id="hud-score"></span>
+  </div>
+  <div class="hud-instruction" id="hud-instr" style="display:none"></div>
+
+  <!-- Result -->
+  <div class="screen" id="scr-result">
+    <div class="result-box">
+      <div class="result-medal" id="res-medal"></div>
+      <div class="result-record" id="res-record"></div>
+      <div class="result-label" id="res-label"></div>
+    </div>
+    <div class="history-box" id="res-history"></div>
+    <button class="btn" onclick="showEvents()" data-i18n="btnNext">次の競技へ</button>
+    <button class="btn btn-small" onclick="showFinal()" data-i18n="btnFinal" id="btn-final" style="display:none">総合結果を見る</button>
+  </div>
+
+  <!-- Final -->
+  <div class="screen" id="scr-final">
+    <div class="result-medal" style="font-size:64px" id="final-medal"></div>
+    <div class="title-text" style="font-size:clamp(22px,5vw,34px)" data-i18n="finalTitle">競技祭 結果</div>
+    <div class="result-record" id="final-score"></div>
+    <div class="result-label" id="final-label"></div>
+    <div class="meander"></div>
+    <ul class="event-list" id="final-list" style="pointer-events:none"></ul>
+    <div class="meander"></div>
+    <button class="btn" onclick="resetAll()" data-i18n="btnReplay">もう一度</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  i18n
+// ═══════════════════════════════════════════
+let LANG = 'ja';
+const I18N = {
+  ja: {
+    subtitle:'古代オリンピア競技祭',
+    histTitle:'歴史的背景',
+    histBody:'紀元前776年、ペロポネソス半島のオリンピアで最初の競技祭が記録された。4年ごとに開催され、ギリシャ全土から選手が集まった。競技中は戦争も休戦（エケケイリア）となり、勝者にはオリーブの冠が与えられた。',
+    btnStart:'競技に挑む',
+    mobileHint:'タップ・スワイプで操作 — モバイル対応',
+    chooseEvent:'競技を選べ',
+    btnBack:'戻る',
+    btnNext:'次の競技へ',
+    btnFinal:'総合結果を見る',
+    finalTitle:'競技祭 結果',
+    btnReplay:'もう一度',
+
+    evStadion:'スタディオン走',
+    evDiskos:'円盤投',
+    evAkon:'やり投',
+    evHalma:'幅跳び',
+    evPankration:'パンクラチオン',
+
+    evStadionDesc:'192m短距離走',
+    evDiskosDesc:'円盤を遠くへ',
+    evAkonDesc:'槍を飛ばせ',
+    evHalmaDesc:'重りで跳べ',
+    evPankrationDesc:'格闘で勝て',
+
+    instrStadion:'左右交互にタップ！',
+    instrDiskos:'タップで回転開始 → タップで投げる',
+    instrAkon:'タップ長押し → 離して投げる（角度を合わせろ）',
+    instrHalma:'タイミングよくタップ！ 3回跳べる',
+    instrPankration:'攻撃 → タップ ／ 防御 → スワイプ',
+
+    histStadion:'<h3>スタディオン走（στάδιον）</h3><p>最古のオリンピック競技。約192mの直線コースを裸足で走った。第1回大会の唯一の種目であり、勝者コロイボスの名はギリシャ中に響いた。</p>',
+    histDiskos:'<h3>円盤投（δίσκος）</h3><p>石や青銅の円盤を投げる競技。ミュロンの「円盤投げ」像は古代ギリシャ彫刻の傑作として知られる。重さ約2kg、直径約21cm。</p>',
+    histAkon:'<h3>やり投（ἄκων）</h3><p>革ひも（アンキュレ）を指に巻きつけ、槍に回転を与えて投げた。的中精度と飛距離の両方が競われた。</p>',
+    histHalma:'<h3>幅跳び（ἅλμα）</h3><p>両手に石の重り（ハルテレス）を持って跳んだ。振り下ろしの反動で飛距離を伸ばす技術は古代ギリシャ独自のもの。</p>',
+    histPankration:'<h3>パンクラチオン（παγκράτιον）</h3><p>打撃・投げ・関節技すべてが許された総合格闘技。噛みつきと目つきのみ禁止。最も危険で最も人気のある種目だった。</p>',
+
+    meterReady:'準備…',
+    meterGo:'走れ！',
+    meters:'m',
+    medal_gold:'金メダル！ オリーブの冠',
+    medal_silver:'銀メダル！',
+    medal_bronze:'銅メダル',
+    medal_none:'入賞ならず',
+    totalPts:'合計点',
+    rank_champion:'オリンピア覇者！',
+    rank_great:'名選手！',
+    rank_good:'健闘した！',
+    rank_try:'修行が足りぬ…',
+    pts:'点',
+  },
+  en: {
+    subtitle:'Ancient Olympic Games',
+    histTitle:'Historical Background',
+    histBody:'In 776 BC, the first athletic festival was recorded at Olympia on the Peloponnese. Held every four years, athletes gathered from all over Greece. During the games, a sacred truce (Ekecheiria) halted all wars, and victors were crowned with olive wreaths.',
+    btnStart:'Enter the Games',
+    mobileHint:'Tap & swipe controls — mobile friendly',
+    chooseEvent:'Choose Your Event',
+    btnBack:'Back',
+    btnNext:'Next Event',
+    btnFinal:'See Final Results',
+    finalTitle:'Festival Results',
+    btnReplay:'Play Again',
+
+    evStadion:'Stadion Sprint',
+    evDiskos:'Diskos Throw',
+    evAkon:'Javelin Throw',
+    evHalma:'Long Jump',
+    evPankration:'Pankration',
+
+    evStadionDesc:'192m dash',
+    evDiskosDesc:'Throw the discus far',
+    evAkonDesc:'Launch the javelin',
+    evHalmaDesc:'Jump with weights',
+    evPankrationDesc:'Fight to win',
+
+    instrStadion:'Tap left & right alternately!',
+    instrDiskos:'Tap to spin → Tap to throw',
+    instrAkon:'Hold tap → Release to throw (match the angle)',
+    instrHalma:'Tap with good timing! 3 jumps allowed',
+    instrPankration:'Attack → Tap / Defend → Swipe',
+
+    histStadion:'<h3>Stadion (στάδιον)</h3><p>The oldest Olympic event — a ~192m straight dash run barefoot. It was the sole event of the first Games, and the winner Koroibos became legendary across Greece.</p>',
+    histDiskos:'<h3>Diskos (δίσκος)</h3><p>Athletes threw a stone or bronze disc. Myron\'s famous Discobolus sculpture immortalized this event. The disc weighed about 2kg with ~21cm diameter.</p>',
+    histAkon:'<h3>Javelin (ἄκων)</h3><p>A leather thong (ankyle) was wound around the fingers and javelin shaft, imparting spin for greater distance. Both accuracy and distance were judged.</p>',
+    histHalma:'<h3>Long Jump (ἅλμα)</h3><p>Athletes held stone weights (halteres) in each hand and swung them during the jump. This uniquely Greek technique extended jumping distance significantly.</p>',
+    histPankration:'<h3>Pankration (παγκράτιον)</h3><p>A brutal all-in combat sport allowing strikes, throws, and joint locks. Only biting and eye-gouging were forbidden. It was the most dangerous and most popular event.</p>',
+
+    meterReady:'Ready…',
+    meterGo:'GO!',
+    meters:'m',
+    medal_gold:'Gold Medal! Olive Crown',
+    medal_silver:'Silver Medal!',
+    medal_bronze:'Bronze Medal',
+    medal_none:'No medal',
+    totalPts:'Total Points',
+    rank_champion:'Champion of Olympia!',
+    rank_great:'Great Athlete!',
+    rank_good:'Well Fought!',
+    rank_try:'More training needed…',
+    pts:'pts',
+  }
+};
+
+function T(key){ return I18N[LANG][key] || key; }
+
+function setLang(l){
+  LANG = l;
+  document.getElementById('btn-ja').classList.toggle('active', l==='ja');
+  document.getElementById('btn-en').classList.toggle('active', l==='en');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.dataset.i18n;
+    if(I18N[l][k]) el.innerHTML = I18N[l][k];
+  });
+  if(document.getElementById('scr-events').classList.contains('active')) buildEventList();
+}
+
+// ═══════════════════════════════════════════
+//  Canvas setup
+// ═══════════════════════════════════════════
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, scale = 1;
+const GAME_W = 480, GAME_H = 720;
+
+function resize(){
+  const ar = GAME_W / GAME_H;
+  let w = window.innerWidth, h = window.innerHeight;
+  if(w/h > ar){ w = h * ar; } else { h = w / ar; }
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.width = GAME_W;
+  canvas.height = GAME_H;
+  W = GAME_W; H = GAME_H;
+  scale = w / GAME_W;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ═══════════════════════════════════════════
+//  Events data
+// ═══════════════════════════════════════════
+const EVENTS = [
+  { id:'stadion', icon:'🏃', thresholds:[100,80,60] },
+  { id:'diskos',  icon:'🥏', thresholds:[100,75,50] },
+  { id:'akon',    icon:'🎯', thresholds:[100,75,50] },
+  { id:'halma',   icon:'🦘', thresholds:[100,75,50] },
+  { id:'pankration', icon:'🤼', thresholds:[100,70,40] },
+];
+
+let scores = {};
+let currentEvent = null;
+let gameState = null;
+let gameActive = false;
+let animId = null;
+
+// ═══════════════════════════════════════════
+//  Screen management
+// ═══════════════════════════════════════════
+function hideAllScreens(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('hud').style.display='none';
+  document.getElementById('hud-instr').style.display='none';
+  gameActive = false;
+  if(animId) cancelAnimationFrame(animId);
+}
+
+function showTitle(){
+  hideAllScreens();
+  document.getElementById('scr-title').classList.add('active');
+  drawTitleBG();
+}
+
+function showEvents(){
+  hideAllScreens();
+  document.getElementById('scr-events').classList.add('active');
+  buildEventList();
+  drawTitleBG();
+}
+
+function buildEventList(){
+  const ul = document.getElementById('event-list');
+  ul.innerHTML = '';
+  EVENTS.forEach(ev=>{
+    const li = document.createElement('li');
+    li.className = 'event-item' + (scores[ev.id] !== undefined ? ' completed' : '');
+    const sc = scores[ev.id];
+    li.innerHTML = `<span class="icon">${ev.icon}</span><span class="name">${T('ev'+cap(ev.id))}<br><small style="opacity:0.6">${T('ev'+cap(ev.id)+'Desc')}</small></span><span class="score">${sc!==undefined?sc+' '+T('pts'):''}</span>`;
+    li.onclick = ()=> startEvent(ev.id);
+    ul.appendChild(li);
+  });
+}
+
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+function showResult(eventId, score, record){
+  hideAllScreens();
+  const ev = EVENTS.find(e=>e.id===eventId);
+  const [g,s,b] = ev.thresholds;
+  let medal, mkey;
+  if(score >= g){ medal='🏆'; mkey='medal_gold'; }
+  else if(score >= s){ medal='🥈'; mkey='medal_silver'; }
+  else if(score >= b){ medal='🥉'; mkey='medal_bronze'; }
+  else { medal='😤'; mkey='medal_none'; }
+
+  document.getElementById('res-medal').textContent = medal;
+  document.getElementById('res-record').textContent = record;
+  document.getElementById('res-label').textContent = T(mkey);
+  document.getElementById('res-history').innerHTML = T('hist'+cap(eventId));
+  document.getElementById('scr-result').classList.add('active');
+
+  const completed = EVENTS.filter(e=>scores[e.id]!==undefined).length;
+  document.getElementById('btn-final').style.display = completed >= EVENTS.length ? 'inline-block' : 'none';
+  drawTitleBG();
+}
+
+function showFinal(){
+  hideAllScreens();
+  const total = EVENTS.reduce((s,e)=>(s + (scores[e.id]||0)),0);
+  const max = EVENTS.length * 100;
+  let medal, rank;
+  if(total >= max*0.85){ medal='🏆'; rank='rank_champion'; }
+  else if(total >= max*0.65){ medal='🥈'; rank='rank_great'; }
+  else if(total >= max*0.4){ medal='🥉'; rank='rank_good'; }
+  else { medal='🏛️'; rank='rank_try'; }
+
+  document.getElementById('final-medal').textContent = medal;
+  document.getElementById('final-score').textContent = total + ' / ' + max + ' ' + T('pts');
+  document.getElementById('final-label').textContent = T(rank);
+
+  const ul = document.getElementById('final-list');
+  ul.innerHTML = '';
+  EVENTS.forEach(ev=>{
+    const li = document.createElement('li');
+    li.className = 'event-item completed';
+    li.innerHTML = `<span class="icon">${ev.icon}</span><span class="name">${T('ev'+cap(ev.id))}</span><span class="score">${scores[ev.id]||0} ${T('pts')}</span>`;
+    ul.appendChild(li);
+  });
+
+  document.getElementById('scr-final').classList.add('active');
+  drawTitleBG();
+}
+
+function resetAll(){
+  scores = {};
+  showTitle();
+}
+
+// ═══════════════════════════════════════════
+//  Drawing helpers
+// ═══════════════════════════════════════════
+function drawSky(yRatio){
+  const grad = ctx.createLinearGradient(0,0,0,H*yRatio);
+  grad.addColorStop(0,'#4A90D4');
+  grad.addColorStop(0.6,'#87CEEB');
+  grad.addColorStop(1,'#B8E0F0');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H*yRatio);
+}
+
+function drawGround(y, color1, color2){
+  const grad = ctx.createLinearGradient(0,y,0,H);
+  grad.addColorStop(0, color1||'#C8A96E');
+  grad.addColorStop(1, color2||'#A08050');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,y,W,H-y);
+}
+
+function drawMountains(y, color){
+  ctx.fillStyle = color || '#8B9DC3';
+  ctx.beginPath();
+  ctx.moveTo(0, y);
+  for(let x=0; x<=W; x+=2){
+    const h = Math.sin(x*0.008)*40 + Math.sin(x*0.02)*15 + Math.sin(x*0.005)*25;
+    ctx.lineTo(x, y - 30 - h);
+  }
+  ctx.lineTo(W, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawColumn(x, y, h, w){
+  ctx.fillStyle = '#E8D8C0';
+  ctx.fillRect(x - w*0.6, y - h, w*1.2, 8);
+  ctx.fillRect(x - w*0.6, y - 6, w*1.2, 6);
+  ctx.fillStyle = '#DDD0B8';
+  for(let i=0; i<3; i++){
+    ctx.beginPath();
+    ctx.moveTo(x - w/2 + i*(w/2), y-6);
+    ctx.lineTo(x - w/2 + i*(w/2) + w*0.15, y - h);
+    ctx.lineTo(x - w/2 + i*(w/2) + w*0.35, y - h);
+    ctx.lineTo(x - w/2 + i*(w/2) + w*0.2, y-6);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+function drawOliveTree(x, y, sz){
+  ctx.fillStyle = '#5C4033';
+  ctx.fillRect(x-sz*0.08, y-sz*0.5, sz*0.16, sz*0.5);
+  ctx.fillStyle = '#6B7F3B';
+  ctx.beginPath();
+  ctx.arc(x, y-sz*0.65, sz*0.35, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#8FA34E';
+  ctx.beginPath();
+  ctx.arc(x-sz*0.15, y-sz*0.75, sz*0.2, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawTitleBG(){
+  drawSky(0.5);
+  drawMountains(H*0.42, '#9BA8C0');
+  drawMountains(H*0.48, '#7D8DA8');
+  drawGround(H*0.48);
+  drawColumn(60, H*0.48, 80, 30);
+  drawColumn(W-60, H*0.48, 80, 30);
+  drawOliveTree(140, H*0.48, 50);
+  drawOliveTree(W-140, H*0.48, 50);
+}
+
+function drawRunner(x, y, frame, flip){
+  ctx.save();
+  if(flip) { ctx.translate(x,0); ctx.scale(-1,1); x=0; } else { ctx.translate(0,0); }
+  const legAngle = Math.sin(frame*0.3)*0.6;
+  const armAngle = Math.sin(frame*0.3+Math.PI)*0.5;
+  ctx.fillStyle = '#D4A574';
+  ctx.beginPath();
+  ctx.arc(x, y-38, 8, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#C49464';
+  ctx.fillRect(x-5, y-30, 10, 18);
+  ctx.strokeStyle = '#C49464'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x, y-26);
+  ctx.lineTo(x + Math.sin(armAngle)*14, y-26 + Math.cos(armAngle)*10);
+  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x, y-26);
+  ctx.lineTo(x - Math.sin(armAngle)*14, y-26 - Math.cos(armAngle)*10);
+  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x, y-12);
+  ctx.lineTo(x + Math.sin(legAngle)*12, y-12 + Math.abs(Math.cos(legAngle))*14);
+  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x, y-12);
+  ctx.lineTo(x - Math.sin(legAngle)*12, y-12 + Math.abs(Math.cos(legAngle))*14);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawDiscThrower(x, y, angle, phase){
+  ctx.fillStyle = '#D4A574';
+  ctx.beginPath(); ctx.arc(x, y-38, 8, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#C49464';
+  ctx.fillRect(x-5, y-30, 10, 18);
+  ctx.strokeStyle = '#C49464'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  const a = angle || 0;
+  ctx.beginPath(); ctx.moveTo(x+4, y-26);
+  ctx.lineTo(x+4 + Math.cos(a)*18, y-26 + Math.sin(a)*18);
+  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x-4, y-26);
+  ctx.lineTo(x-4 - Math.cos(a*0.3)*10, y-26 + 8);
+  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x-3, y-12);
+  ctx.lineTo(x-8, y+2);
+  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+3, y-12);
+  ctx.lineTo(x+8, y+2);
+  ctx.stroke();
+  if(phase < 2){
+    ctx.fillStyle = '#8B6914';
+    ctx.beginPath();
+    ctx.ellipse(x+4+Math.cos(a)*20, y-26+Math.sin(a)*20, 7, 5, a, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#6B5010'; ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+// ═══════════════════════════════════════════
+//  Input
+// ═══════════════════════════════════════════
+let touches = [];
+let tapCallback = null;
+let swipeCallback = null;
+let holdStart = null;
+let holdCallback = null;
+let releaseCallback = null;
+
+canvas.addEventListener('touchstart', e=>{
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = (t.clientX - rect.left) / scale;
+  const y = (t.clientY - rect.top) / scale;
+  touches.push({id:t.identifier, sx:x, sy:y, x, y, t:Date.now()});
+  holdStart = Date.now();
+  if(tapCallback) tapCallback(x, y);
+}, {passive:false});
+
+canvas.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  for(const t of e.changedTouches){
+    const rect = canvas.getBoundingClientRect();
+    const entry = touches.find(tt=>tt.id===t.identifier);
+    if(entry){
+      entry.x = (t.clientX - rect.left) / scale;
+      entry.y = (t.clientY - rect.top) / scale;
+    }
+  }
+}, {passive:false});
+
+canvas.addEventListener('touchend', e=>{
+  e.preventDefault();
+  for(const t of e.changedTouches){
+    const rect = canvas.getBoundingClientRect();
+    const entry = touches.find(tt=>tt.id===t.identifier);
+    if(entry){
+      const dx = (t.clientX - rect.left)/scale - entry.sx;
+      const dy = (t.clientY - rect.top)/scale - entry.sy;
+      if(Math.abs(dx)>30 || Math.abs(dy)>30){
+        if(swipeCallback) swipeCallback(dx, dy);
+      }
+      touches = touches.filter(tt=>tt.id!==t.identifier);
+    }
+  }
+  if(releaseCallback) releaseCallback(Date.now() - (holdStart||Date.now()));
+  holdStart = null;
+}, {passive:false});
+
+canvas.addEventListener('mousedown', e=>{
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / scale;
+  const y = (e.clientY - rect.top) / scale;
+  holdStart = Date.now();
+  if(tapCallback) tapCallback(x, y);
+});
+canvas.addEventListener('mouseup', e=>{
+  if(releaseCallback) releaseCallback(Date.now() - (holdStart||Date.now()));
+  holdStart = null;
+});
+
+document.addEventListener('keydown', e=>{
+  if(!gameActive) return;
+  if(e.code === 'Space' || e.code === 'ArrowUp'){
+    e.preventDefault();
+    if(tapCallback) tapCallback(W/2, H/2);
+  }
+  if(e.code === 'ArrowLeft'){
+    if(tapCallback) tapCallback(W*0.25, H/2);
+  }
+  if(e.code === 'ArrowRight'){
+    if(tapCallback) tapCallback(W*0.75, H/2);
+  }
+});
+document.addEventListener('keyup', e=>{
+  if(!gameActive) return;
+  if(e.code === 'Space' || e.code === 'ArrowUp'){
+    if(releaseCallback) releaseCallback(Date.now() - (holdStart||Date.now()));
+    holdStart = null;
+  }
+});
+
+// ═══════════════════════════════════════════
+//  Start event
+// ═══════════════════════════════════════════
+function startEvent(id){
+  hideAllScreens();
+  currentEvent = id;
+  gameActive = true;
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('hud-event').textContent = T('ev'+cap(id));
+  document.getElementById('hud-score').textContent = '';
+  document.getElementById('hud-instr').style.display = 'block';
+  document.getElementById('hud-instr').textContent = T('instr'+cap(id));
+
+  tapCallback = null; swipeCallback = null; releaseCallback = null;
+
+  switch(id){
+    case 'stadion': runStadion(); break;
+    case 'diskos': runDiskos(); break;
+    case 'akon': runAkon(); break;
+    case 'halma': runHalma(); break;
+    case 'pankration': runPankration(); break;
+  }
+}
+
+function finishEvent(id, score, record){
+  gameActive = false;
+  tapCallback = null; swipeCallback = null; releaseCallback = null;
+  scores[id] = score;
+  setTimeout(()=> showResult(id, score, record), 600);
+}
+
+// ═══════════════════════════════════════════
+//  1. STADION — Sprint
+// ═══════════════════════════════════════════
+function runStadion(){
+  let phase = 0; // 0=countdown 1=running 2=done
+  let countdown = 3;
+  let countdownT = Date.now();
+  let distance = 0;
+  const TOTAL = 192;
+  let taps = 0;
+  let lastSide = null;
+  let frame = 0;
+  let startTime = 0;
+  let cpuDist = 0;
+  let cpuSpeed = 0;
+  let runnerFrame = 0;
+  let cpuFrame = 0;
+  let falseStart = false;
+
+  tapCallback = (x, y)=>{
+    if(phase === 0){
+      if(countdown > 0) { falseStart = true; }
+      return;
+    }
+    if(phase === 2) return;
+    const side = x < W/2 ? 'L' : 'R';
+    if(side !== lastSide){
+      taps++;
+      distance += 2.4 + Math.random()*0.3;
+      lastSide = side;
+    }
+  };
+
+  function loop(){
+    if(!gameActive) return;
+    frame++;
+
+    // Scene
+    drawSky(0.55);
+    drawMountains(H*0.48, '#9BA8C0');
+    drawGround(H*0.55, '#D4B896', '#B89870');
+
+    // Track lanes
+    const trackY = H*0.55;
+    ctx.strokeStyle = '#FFF8E0';
+    ctx.lineWidth = 1;
+    for(let i=0; i<5; i++){
+      const ly = trackY + 30 + i*40;
+      ctx.setLineDash([8,8]);
+      ctx.beginPath(); ctx.moveTo(0,ly); ctx.lineTo(W,ly); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Columns
+    drawColumn(40, H*0.55, 60, 22);
+    drawColumn(W-40, H*0.55, 60, 22);
+
+    // Stadium crowd (simple)
+    for(let i=0; i<20; i++){
+      ctx.fillStyle = ['#C49464','#D4A574','#B08050','#A07040'][i%4];
+      ctx.beginPath();
+      ctx.arc(30+i*23, trackY-10+Math.sin(i*1.5+frame*0.1)*3, 5, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    if(phase === 0){
+      const elapsed = Date.now() - countdownT;
+      if(elapsed > 1000){
+        countdown--;
+        countdownT = Date.now();
+        if(countdown <= 0){
+          if(falseStart){
+            phase = 2;
+            finishEvent('stadion', 0, T('meterReady')+'...');
+            return;
+          }
+          phase = 1;
+          startTime = Date.now();
+          document.getElementById('hud-instr').textContent = T('instrStadion');
+        }
+      }
+      ctx.fillStyle = countdown > 0 ? var_gold : '#FF4444';
+      ctx.font = 'bold 72px Georgia';
+      ctx.textAlign = 'center';
+      ctx.fillText(countdown > 0 ? countdown : T('meterGo'), W/2, H*0.4);
+
+      // Runners at start
+      drawRunner(60, trackY+50, 0);
+      drawRunner(60, trackY+90, 0);
+      drawRunner(60, trackY+130, 0);
+
+    } else if(phase === 1){
+      const elapsed = (Date.now() - startTime) / 1000;
+      cpuSpeed += (1.8 + Math.random()*0.4 - cpuSpeed)*0.02;
+      cpuDist += cpuSpeed;
+
+      const pct = Math.min(distance / TOTAL, 1);
+      const cpuPct = Math.min(cpuDist / TOTAL, 1);
+
+      const playerX = 40 + pct * (W-80);
+      const cpu1X = 40 + cpuPct * (W-80);
+      const cpu2X = 40 + Math.min(cpuDist*0.92/TOTAL,1) * (W-80);
+
+      if(taps > 0) runnerFrame += 3;
+      cpuFrame += 2;
+
+      drawRunner(cpu2X, trackY+130, cpuFrame*0.7);
+      drawRunner(cpu1X, trackY+90, cpuFrame);
+      drawRunner(playerX, trackY+50, runnerFrame);
+
+      // Player indicator
+      ctx.fillStyle = var_gold;
+      ctx.font = 'bold 12px Georgia';
+      ctx.textAlign = 'center';
+      ctx.fillText('▼', playerX, trackY+25);
+
+      // Progress
+      const prog = Math.min(distance, TOTAL).toFixed(1);
+      document.getElementById('hud-score').textContent = prog + ' / ' + TOTAL + 'm';
+
+      // Finish line
+      ctx.strokeStyle = '#FFF';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(W-50, trackY+20);
+      ctx.lineTo(W-50, trackY+160);
+      ctx.stroke();
+
+      if(distance >= TOTAL){
+        phase = 2;
+        const time = elapsed.toFixed(2);
+        const score = Math.max(0, Math.min(100, Math.round(100 - (elapsed - 6)*15)));
+        finishEvent('stadion', score, time + 's / 192m');
+      }
+    }
+
+    animId = requestAnimationFrame(loop);
+  }
+
+  const var_gold = '#D4A947';
+  loop();
+}
+
+// ═══════════════════════════════════════════
+//  2. DISKOS — Discus Throw
+// ═══════════════════════════════════════════
+function runDiskos(){
+  let phase = 0; // 0=wait 1=spinning 2=thrown 3=landed
+  let spin = 0;
+  let spinSpeed = 0;
+  let throwAngle = 0;
+  let discX, discY, discVx, discVy;
+  let distance = 0;
+  let frame = 0;
+  let throwerAngle = 0;
+  let bestDist = 0;
+  let attempts = 0;
+  const MAX_ATTEMPTS = 3;
+  let flashTimer = 0;
+
+  tapCallback = ()=>{
+    if(phase === 0){
+      phase = 1;
+      spinSpeed = 0;
+      document.getElementById('hud-instr').textContent = LANG==='ja'? 'タップで投げる！':'Tap to throw!';
+    } else if(phase === 1){
+      phase = 2;
+      throwAngle = throwerAngle;
+      const power = Math.min(spinSpeed * 12, 16);
+      discX = W*0.25;
+      discY = H*0.55;
+      discVx = Math.cos(-throwAngle * 0.8 - 0.3) * power;
+      discVy = Math.sin(-throwAngle * 0.8 - 0.3) * power;
+    } else if(phase === 3){
+      attempts++;
+      if(attempts >= MAX_ATTEMPTS){
+        const score = Math.min(100, Math.round(bestDist * 1.5));
+        finishEvent('diskos', score, bestDist.toFixed(1) + 'm');
+        return;
+      }
+      phase = 0;
+      distance = 0;
+      document.getElementById('hud-instr').textContent = T('instrDiskos');
+    }
+  };
+
+  function loop(){
+    if(!gameActive) return;
+    frame++;
+
+    drawSky(0.55);
+    drawMountains(H*0.48, '#9BA8C0');
+    drawGround(H*0.55, '#8BA06A', '#6B8050');
+
+    // Field markings
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    for(let d=10; d<=70; d+=10){
+      const fx = W*0.25 + d*4;
+      ctx.beginPath();
+      ctx.moveTo(fx, H*0.55);
+      ctx.lineTo(fx, H*0.55+20);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '10px Georgia';
+      ctx.textAlign = 'center';
+      ctx.fillText(d+'m', fx, H*0.55+32);
+    }
+
+    // Thrower
+    const throwerX = W*0.2;
+    const throwerY = H*0.55 + 50;
+
+    if(phase === 0){
+      drawDiscThrower(throwerX, throwerY, -0.5, 0);
+      ctx.fillStyle = '#D4A947';
+      ctx.font = 'bold 16px Georgia';
+      ctx.textAlign = 'center';
+      const attText = (attempts+1)+'/'+MAX_ATTEMPTS;
+      ctx.fillText(attText, throwerX, throwerY + 30);
+    } else if(phase === 1){
+      spinSpeed = Math.min(spinSpeed + 0.015, 1);
+      throwerAngle += spinSpeed * 0.15;
+      spin += spinSpeed * 0.2;
+      drawDiscThrower(throwerX, throwerY, throwerAngle, 1);
+
+      // Power meter
+      const meterW = 120, meterH = 12;
+      const mx = W/2 - meterW/2, my = H*0.8;
+      ctx.fillStyle = '#333';
+      ctx.fillRect(mx, my, meterW, meterH);
+      const pct = spinSpeed;
+      const color = pct < 0.4 ? '#F44' : pct < 0.75 ? '#FA0' : '#4F4';
+      ctx.fillStyle = color;
+      ctx.fillRect(mx, my, meterW * pct, meterH);
+      ctx.strokeStyle = '#FFF';
+      ctx.strokeRect(mx, my, meterW, meterH);
+    } else if(phase === 2){
+      drawDiscThrower(throwerX, throwerY, throwAngle, 2);
+      discVy += 0.3;
+      discX += discVx;
+      discY += discVy;
+
+      ctx.fillStyle = '#8B6914';
+      ctx.beginPath();
+      ctx.ellipse(discX, discY, 7, 4, spin, 0, Math.PI*2);
+      ctx.fill();
+      spin += 0.3;
+
+      if(discY > H*0.55 + 50){
+        phase = 3;
+        distance = Math.max(0, (discX - W*0.25) / 4);
+        bestDist = Math.max(bestDist, distance);
+        flashTimer = 30;
+        document.getElementById('hud-instr').textContent = distance.toFixed(1) + 'm' + (attempts < MAX_ATTEMPTS-1 ? (LANG==='ja'?' — タップで再挑戦':' — Tap to retry') : (LANG==='ja'?' — タップで結果':' — Tap for results'));
+      }
+    } else if(phase === 3){
+      drawDiscThrower(throwerX, throwerY, throwAngle, 2);
+      ctx.fillStyle = '#8B6914';
+      ctx.beginPath();
+      ctx.ellipse(discX, Math.min(discY, H*0.55+50), 7, 4, spin, 0, Math.PI*2);
+      ctx.fill();
+
+      if(flashTimer > 0){
+        flashTimer--;
+        ctx.fillStyle = `rgba(212,169,71,${flashTimer/30*0.3})`;
+        ctx.beginPath();
+        ctx.arc(discX, H*0.55+50, 20, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    document.getElementById('hud-score').textContent = (LANG==='ja'?'最長 ':'Best ') + bestDist.toFixed(1) + 'm';
+
+    animId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// ═══════════════════════════════════════════
+//  3. AKON — Javelin Throw
+// ═══════════════════════════════════════════
+function runAkon(){
+  let phase = 0; // 0=aiming 1=charging 2=thrown 3=landed
+  let angle = 0;
+  let angleDir = 1;
+  let power = 0;
+  let javX, javY, javVx, javVy;
+  let distance = 0;
+  let bestDist = 0;
+  let attempts = 0;
+  const MAX_ATTEMPTS = 3;
+  let javAngle = 0;
+  let frame = 0;
+  let flashTimer = 0;
+
+  tapCallback = ()=>{
+    if(phase === 0){
+      phase = 1;
+      power = 0;
+      document.getElementById('hud-instr').textContent = LANG==='ja'?'離して投げる！':'Release to throw!';
+    } else if(phase === 3){
+      attempts++;
+      if(attempts >= MAX_ATTEMPTS){
+        const score = Math.min(100, Math.round(bestDist * 1.2));
+        finishEvent('akon', score, bestDist.toFixed(1) + 'm');
+        return;
+      }
+      phase = 0;
+      document.getElementById('hud-instr').textContent = T('instrAkon');
+    }
+  };
+
+  releaseCallback = (dur)=>{
+    if(phase === 1){
+      phase = 2;
+      const pw = Math.min(power, 1) * 14 + 4;
+      const a = -angle;
+      javX = W*0.15;
+      javY = H*0.55;
+      javVx = Math.cos(a) * pw;
+      javVy = Math.sin(a) * pw;
+      javAngle = a;
+    }
+  };
+
+  function loop(){
+    if(!gameActive) return;
+    frame++;
+
+    drawSky(0.55);
+    drawMountains(H*0.48, '#9BA8C0');
+    drawGround(H*0.55, '#8BA06A', '#6B8050');
+
+    // Distance marks
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    for(let d=10; d<=90; d+=10){
+      const fx = W*0.15 + d*4;
+      if(fx > W) break;
+      ctx.beginPath(); ctx.moveTo(fx,H*0.55); ctx.lineTo(fx,H*0.55+15); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '10px Georgia'; ctx.textAlign='center';
+      ctx.fillText(d+'m', fx, H*0.55+27);
+    }
+
+    const throwerX = W*0.12, throwerY = H*0.55+50;
+
+    if(phase === 0){
+      angle += 0.02 * angleDir;
+      if(angle > 1.2 || angle < 0.2) angleDir *= -1;
+
+      // Thrower with javelin
+      ctx.fillStyle = '#D4A574';
+      ctx.beginPath(); ctx.arc(throwerX,throwerY-38,8,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#C49464';
+      ctx.fillRect(throwerX-5,throwerY-30,10,18);
+      ctx.strokeStyle = '#8B6914'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(throwerX+6, throwerY-24);
+      ctx.lineTo(throwerX+6+Math.cos(-angle)*50, throwerY-24+Math.sin(-angle)*50);
+      ctx.stroke();
+
+      // Angle indicator
+      ctx.strokeStyle = 'rgba(212,169,71,0.5)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+      ctx.beginPath();
+      ctx.arc(throwerX+6, throwerY-24, 60, -1.3, -0.1);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#F44'; ctx.beginPath();
+      ctx.arc(throwerX+6+Math.cos(-angle)*60, throwerY-24+Math.sin(-angle)*60, 4, 0, Math.PI*2);
+      ctx.fill();
+
+      // Best angle zone
+      ctx.fillStyle = 'rgba(79,255,79,0.15)';
+      ctx.beginPath();
+      ctx.moveTo(throwerX+6, throwerY-24);
+      ctx.arc(throwerX+6, throwerY-24, 60, -0.85, -0.65);
+      ctx.closePath();
+      ctx.fill();
+
+    } else if(phase === 1){
+      power = Math.min(power + 0.018, 1);
+
+      ctx.fillStyle = '#D4A574';
+      ctx.beginPath(); ctx.arc(throwerX,throwerY-38,8,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#C49464';
+      ctx.fillRect(throwerX-5,throwerY-30,10,18);
+      ctx.strokeStyle = '#8B6914'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(throwerX+6, throwerY-24);
+      ctx.lineTo(throwerX+6+Math.cos(-angle)*50, throwerY-24+Math.sin(-angle)*50);
+      ctx.stroke();
+
+      // Power meter
+      const meterW = 140, meterH = 14;
+      const mx = W/2 - meterW/2, my = H*0.82;
+      ctx.fillStyle = '#333'; ctx.fillRect(mx,my,meterW,meterH);
+      const c = power < 0.4?'#F44':power<0.75?'#FA0':'#4F4';
+      ctx.fillStyle = c; ctx.fillRect(mx,my,meterW*power,meterH);
+      ctx.strokeStyle = '#FFF'; ctx.strokeRect(mx,my,meterW,meterH);
+      ctx.fillStyle = '#FFF'; ctx.font = 'bold 11px Georgia'; ctx.textAlign = 'center';
+      ctx.fillText(LANG==='ja'?'パワー':'POWER', W/2, my-4);
+
+    } else if(phase === 2){
+      ctx.fillStyle = '#D4A574';
+      ctx.beginPath(); ctx.arc(throwerX,throwerY-38,8,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#C49464';
+      ctx.fillRect(throwerX-5,throwerY-30,10,18);
+
+      javVy += 0.25;
+      javX += javVx;
+      javY += javVy;
+      javAngle = Math.atan2(javVy, javVx);
+
+      ctx.strokeStyle = '#8B6914'; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(javX - Math.cos(javAngle)*20, javY - Math.sin(javAngle)*20);
+      ctx.lineTo(javX + Math.cos(javAngle)*20, javY + Math.sin(javAngle)*20);
+      ctx.stroke();
+      // Tip
+      ctx.fillStyle = '#666';
+      ctx.beginPath();
+      ctx.moveTo(javX + Math.cos(javAngle)*22, javY + Math.sin(javAngle)*22);
+      ctx.lineTo(javX + Math.cos(javAngle+0.3)*16, javY + Math.sin(javAngle+0.3)*16);
+      ctx.lineTo(javX + Math.cos(javAngle-0.3)*16, javY + Math.sin(javAngle-0.3)*16);
+      ctx.closePath();
+      ctx.fill();
+
+      if(javY > H*0.55 + 50){
+        phase = 3;
+        distance = Math.max(0, (javX - W*0.15) / 4);
+        bestDist = Math.max(bestDist, distance);
+        flashTimer = 30;
+        document.getElementById('hud-instr').textContent = distance.toFixed(1)+'m'+(attempts<MAX_ATTEMPTS-1?(LANG==='ja'?' — タップで再挑戦':' — Tap to retry'):(LANG==='ja'?' — タップで結果':' — Tap for results'));
+      }
+    } else if(phase === 3){
+      ctx.strokeStyle = '#8B6914'; ctx.lineWidth = 2.5;
+      const stickY = Math.min(javY, H*0.55+50);
+      ctx.beginPath();
+      ctx.moveTo(javX, stickY);
+      ctx.lineTo(javX - Math.cos(javAngle)*30, stickY - 30);
+      ctx.stroke();
+      if(flashTimer > 0){
+        flashTimer--;
+        ctx.fillStyle = `rgba(212,169,71,${flashTimer/30*0.3})`;
+        ctx.beginPath(); ctx.arc(javX, stickY, 15, 0, Math.PI*2); ctx.fill();
+      }
+    }
+
+    document.getElementById('hud-score').textContent = (LANG==='ja'?'最長 ':'Best ')+bestDist.toFixed(1)+'m  ('+(attempts+1)+'/'+MAX_ATTEMPTS+')';
+    animId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// ═══════════════════════════════════════════
+//  4. HALMA — Long Jump
+// ═══════════════════════════════════════════
+function runHalma(){
+  let phase = 0; // 0=running 1=jumping 2=airborne 3=landed
+  let runDist = 0;
+  let runSpeed = 0;
+  let jumpPower = 0;
+  let jumpAngle = 0;
+  let jumpAngleDir = 1;
+  let playerX, playerY;
+  let vx = 0, vy = 0;
+  let distance = 0;
+  let bestDist = 0;
+  let attempts = 0;
+  const MAX_ATTEMPTS = 3;
+  let frame = 0;
+  let flashTimer = 0;
+  let runFrame = 0;
+  let landX = 0;
+  const BOARD_X = W * 0.2;
+  const BOARD_END = W * 0.15;
+
+  function reset(){
+    phase = 0; runDist = 0; runSpeed = 0;
+    jumpAngle = 0.5; jumpAngleDir = 1;
+    playerX = 40; playerY = H*0.6;
+  }
+  reset();
+
+  tapCallback = ()=>{
+    if(phase === 0){
+      runSpeed = Math.min(runSpeed + 0.8, 6);
+    } else if(phase === 1){
+      phase = 2;
+      const pw = runSpeed * 0.6 + 3;
+      vx = Math.cos(-jumpAngle) * pw * 1.5;
+      vy = Math.sin(-jumpAngle) * pw * 1.5;
+      document.getElementById('hud-instr').textContent = '';
+    } else if(phase === 3){
+      attempts++;
+      if(attempts >= MAX_ATTEMPTS){
+        const score = Math.min(100, Math.round(bestDist * 8));
+        finishEvent('halma', score, bestDist.toFixed(2) + 'm');
+        return;
+      }
+      reset();
+      document.getElementById('hud-instr').textContent = T('instrHalma');
+    }
+  };
+
+  function loop(){
+    if(!gameActive) return;
+    frame++;
+
+    drawSky(0.5);
+    drawMountains(H*0.42, '#9BA8C0');
+
+    // Sand pit
+    const groundY = H*0.6;
+    drawGround(groundY, '#C8A96E', '#A08050');
+
+    // Runway
+    ctx.fillStyle = '#B89870';
+    ctx.fillRect(0, groundY, W, 8);
+
+    // Takeoff board
+    ctx.fillStyle = '#FFF';
+    ctx.fillRect(BOARD_X - 4, groundY, 8, 8);
+
+    // Sand pit area
+    ctx.fillStyle = '#E8D4A0';
+    ctx.fillRect(BOARD_X + 20, groundY, W - BOARD_X - 40, 60);
+    ctx.strokeStyle = '#C8A96E';
+    ctx.strokeRect(BOARD_X + 20, groundY, W - BOARD_X - 40, 60);
+
+    // Distance marks in pit
+    for(let d=2; d<=12; d+=2){
+      const mx = BOARD_X + d * 30;
+      if(mx > W-20) break;
+      ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.font = '9px Georgia'; ctx.textAlign = 'center';
+      ctx.fillText(d+'m', mx, groundY+55);
+    }
+
+    if(phase === 0){
+      runSpeed *= 0.985;
+      runDist += runSpeed;
+      playerX = 40 + (runDist % (BOARD_X - 60));
+      playerY = groundY;
+      runFrame += runSpeed * 0.5;
+
+      if(playerX >= BOARD_X - 20 && runSpeed > 1){
+        phase = 1;
+        playerX = BOARD_X;
+        jumpAngle = 0.5;
+        document.getElementById('hud-instr').textContent = LANG==='ja'?'タップで跳ぶ！角度を合わせろ':'Tap to jump! Match the angle';
+      }
+
+      drawRunner(playerX, playerY, runFrame);
+
+      // Speed meter
+      ctx.fillStyle = '#333';
+      const mw = 100, mh = 10, mx = 20, my = groundY + 30;
+      ctx.fillRect(mx,my,mw,mh);
+      ctx.fillStyle = runSpeed < 2 ? '#F44' : runSpeed < 4 ? '#FA0' : '#4F4';
+      ctx.fillRect(mx,my,mw*(runSpeed/6),mh);
+      ctx.strokeStyle='#FFF'; ctx.strokeRect(mx,my,mw,mh);
+      ctx.fillStyle='#FFF'; ctx.font='10px Georgia'; ctx.textAlign='left';
+      ctx.fillText(LANG==='ja'?'速度':'Speed',mx,my-3);
+
+    } else if(phase === 1){
+      jumpAngle += 0.03 * jumpAngleDir;
+      if(jumpAngle > 1.2 || jumpAngle < 0.2) jumpAngleDir *= -1;
+
+      drawRunner(BOARD_X, groundY, runFrame);
+
+      // Angle guide
+      ctx.strokeStyle = 'rgba(212,169,71,0.5)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+      ctx.beginPath();
+      ctx.arc(BOARD_X, groundY-10, 50, -1.3, -0.1);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#F44';
+      ctx.beginPath();
+      ctx.arc(BOARD_X+Math.cos(-jumpAngle)*50, groundY-10+Math.sin(-jumpAngle)*50, 4, 0, Math.PI*2);
+      ctx.fill();
+
+      // Sweet spot
+      ctx.fillStyle = 'rgba(79,255,79,0.15)';
+      ctx.beginPath();
+      ctx.moveTo(BOARD_X,groundY-10);
+      ctx.arc(BOARD_X,groundY-10,50,-0.9,-0.65);
+      ctx.closePath();
+      ctx.fill();
+
+    } else if(phase === 2){
+      vy += 0.2;
+      playerX += vx;
+      playerY += vy;
+
+      // Halteres (weights in hands)
+      ctx.fillStyle = '#666';
+      ctx.fillRect(playerX-12, playerY-30, 6, 4);
+      ctx.fillRect(playerX+6, playerY-30, 6, 4);
+
+      drawRunner(playerX, playerY, frame*2);
+
+      if(playerY >= groundY){
+        phase = 3;
+        playerY = groundY;
+        landX = playerX;
+        distance = Math.max(0, (playerX - BOARD_X) / 30);
+        bestDist = Math.max(bestDist, distance);
+        flashTimer = 30;
+        document.getElementById('hud-instr').textContent = distance.toFixed(2)+'m'+(attempts<MAX_ATTEMPTS-1?(LANG==='ja'?' — タップで再挑戦':' — Tap to retry'):(LANG==='ja'?' — タップで結果':' — Tap for results'));
+      }
+    } else if(phase === 3){
+      drawRunner(landX, groundY, 0);
+      if(flashTimer > 0){
+        flashTimer--;
+        ctx.fillStyle = `rgba(212,169,71,${flashTimer/30*0.3})`;
+        ctx.beginPath(); ctx.arc(landX, groundY, 20, 0, Math.PI*2); ctx.fill();
+      }
+    }
+
+    document.getElementById('hud-score').textContent = (LANG==='ja'?'最長 ':'Best ')+bestDist.toFixed(2)+'m  ('+(attempts+1)+'/'+MAX_ATTEMPTS+')';
+    animId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// ═══════════════════════════════════════════
+//  5. PANKRATION — Combat
+// ═══════════════════════════════════════════
+function runPankration(){
+  let hp = 100, enemyHp = 100;
+  let phase = 0; // 0=fight 1=done
+  let frame = 0;
+  let playerAction = 'idle'; // idle, attack, defend, hit
+  let enemyAction = 'idle';
+  let actionTimer = 0;
+  let enemyTimer = 0;
+  let enemyNextAttack = 60 + Math.random()*60;
+  let combo = 0;
+  let shakeX = 0, shakeY = 0;
+  let hitEffects = [];
+  let round = 1;
+
+  tapCallback = ()=>{
+    if(phase === 1) return;
+    if(actionTimer > 0) return;
+    playerAction = 'attack';
+    actionTimer = 20;
+
+    if(enemyAction === 'defend'){
+      hitEffects.push({x:W*0.65, y:H*0.5, t:15, text:LANG==='ja'?'防御！':'BLOCK!', color:'#AAA'});
+      combo = 0;
+    } else {
+      const dmg = 8 + Math.floor(Math.random()*5) + combo*2;
+      enemyHp = Math.max(0, enemyHp - dmg);
+      enemyAction = 'hit';
+      combo++;
+      hitEffects.push({x:W*0.65+Math.random()*20-10, y:H*0.45+Math.random()*20-10, t:20, text:'-'+dmg, color:'#F44'});
+      shakeX = 5; shakeY = 3;
+      if(enemyHp <= 0){
+        phase = 1;
+        const score = Math.min(100, Math.round(hp * 0.8 + combo * 3));
+        setTimeout(()=> finishEvent('pankration', score, hp+'HP / '+round+' '+T(LANG==='ja'?'pts':'pts')), 800);
+      }
+    }
+  };
+
+  swipeCallback = ()=>{
+    if(phase === 1 || actionTimer > 0) return;
+    playerAction = 'defend';
+    actionTimer = 25;
+  };
+
+  function drawFighter(x, y, action, flip, isEnemy){
+    ctx.save();
+    if(flip){ ctx.translate(x*2,0); ctx.scale(-1,1); }
+
+    const col = isEnemy ? '#B07050' : '#D4A574';
+    const colDk = isEnemy ? '#905840' : '#C49464';
+
+    // Body
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(x, y-38, 9, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = colDk;
+    ctx.fillRect(x-6, y-29, 12, 20);
+
+    // Arms & legs based on action
+    ctx.strokeStyle = colDk; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+
+    if(action === 'attack'){
+      ctx.beginPath(); ctx.moveTo(x+5,y-22); ctx.lineTo(x+30,y-28); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x-5,y-22); ctx.lineTo(x-12,y-15); ctx.stroke();
+    } else if(action === 'defend'){
+      ctx.beginPath(); ctx.moveTo(x+5,y-24); ctx.lineTo(x+14,y-35); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x-5,y-24); ctx.lineTo(x-14,y-35); ctx.stroke();
+    } else if(action === 'hit'){
+      ctx.beginPath(); ctx.moveTo(x+5,y-22); ctx.lineTo(x+15,y-12); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x-5,y-22); ctx.lineTo(x-15,y-12); ctx.stroke();
+    } else {
+      const bob = Math.sin(frame*0.08)*3;
+      ctx.beginPath(); ctx.moveTo(x+5,y-22); ctx.lineTo(x+14,y-16+bob); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x-5,y-22); ctx.lineTo(x-14,y-16-bob); ctx.stroke();
+    }
+
+    // Legs
+    const legBob = Math.sin(frame*0.06)*2;
+    ctx.beginPath(); ctx.moveTo(x-3,y-9); ctx.lineTo(x-8,y+4+legBob); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+3,y-9); ctx.lineTo(x+8,y+4-legBob); ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function loop(){
+    if(!gameActive) return;
+    frame++;
+
+    // Shake decay
+    shakeX *= 0.85; shakeY *= 0.85;
+    ctx.save();
+    ctx.translate(shakeX*(Math.random()-0.5)*2, shakeY*(Math.random()-0.5)*2);
+
+    // Arena
+    drawSky(0.45);
+    drawMountains(H*0.38, '#9BA8C0');
+
+    // Crowd
+    const crowdY = H*0.45;
+    ctx.fillStyle = '#A09080';
+    ctx.fillRect(0, crowdY-30, W, 35);
+    for(let i=0; i<30; i++){
+      ctx.fillStyle = ['#C49464','#D4A574','#B08050','#A07040','#906848'][i%5];
+      ctx.beginPath();
+      ctx.arc(8+i*16, crowdY-15+Math.sin(i*2+frame*0.05)*2, 4.5, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // Arena floor
+    ctx.fillStyle = '#D4B896';
+    ctx.fillRect(0, crowdY+5, W, H-crowdY-5);
+    ctx.fillStyle = '#C8A880';
+    ctx.beginPath();
+    ctx.ellipse(W/2, H*0.65, W*0.35, H*0.12, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#B09870'; ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Columns
+    drawColumn(30, crowdY+5, 50, 18);
+    drawColumn(W-30, crowdY+5, 50, 18);
+
+    // Action timer
+    if(actionTimer > 0){
+      actionTimer--;
+      if(actionTimer === 0) playerAction = 'idle';
+    }
+
+    // Enemy AI
+    enemyTimer++;
+    if(enemyTimer >= enemyNextAttack && phase === 0){
+      enemyTimer = 0;
+      enemyNextAttack = 40 + Math.random()*50;
+
+      if(Math.random() < 0.35){
+        enemyAction = 'defend';
+        setTimeout(()=>{ if(phase===0) enemyAction='idle'; }, 500);
+      } else {
+        enemyAction = 'attack';
+        setTimeout(()=>{
+          if(phase===0){
+            enemyAction = 'idle';
+            if(playerAction === 'defend'){
+              hitEffects.push({x:W*0.35, y:H*0.5, t:15, text:LANG==='ja'?'防御！':'BLOCK!', color:'#4F4'});
+              combo = 0;
+            } else {
+              const dmg = 6 + Math.floor(Math.random()*4);
+              hp = Math.max(0, hp - dmg);
+              playerAction = 'hit';
+              setTimeout(()=>{ if(phase===0) playerAction='idle'; }, 300);
+              hitEffects.push({x:W*0.35+Math.random()*20-10, y:H*0.5+Math.random()*20-10, t:20, text:'-'+dmg, color:'#F84'});
+              shakeX = 3; shakeY = 2;
+              combo = 0;
+              if(hp <= 0){
+                phase = 1;
+                const score = Math.max(0, Math.round(enemyHp > 0 ? (100 - enemyHp)*0.5 : 10));
+                setTimeout(()=> finishEvent('pankration', score, '0HP...'), 800);
+              }
+            }
+          }
+        }, 300);
+      }
+    }
+
+    // Fighters
+    const pX = W*0.3, pY = H*0.65;
+    const eX = W*0.7, eY = H*0.65;
+    drawFighter(pX, pY, playerAction, false, false);
+    drawFighter(eX, eY, enemyAction, true, true);
+
+    // HP bars
+    const barW = 150, barH = 14;
+    // Player
+    ctx.fillStyle = '#333'; ctx.fillRect(20, 50, barW, barH);
+    ctx.fillStyle = hp > 50 ? '#4F4' : hp > 25 ? '#FA0' : '#F44';
+    ctx.fillRect(20, 50, barW*(hp/100), barH);
+    ctx.strokeStyle = '#FFF'; ctx.strokeRect(20, 50, barW, barH);
+    ctx.fillStyle = '#FFF'; ctx.font = 'bold 11px Georgia'; ctx.textAlign = 'left';
+    ctx.fillText(LANG==='ja'?'あなた':'YOU', 20, 46);
+
+    // Enemy
+    ctx.fillStyle = '#333'; ctx.fillRect(W-20-barW, 50, barW, barH);
+    ctx.fillStyle = enemyHp > 50 ? '#F44' : enemyHp > 25 ? '#FA0' : '#4F4';
+    ctx.fillRect(W-20-barW, 50, barW*(enemyHp/100), barH);
+    ctx.strokeStyle = '#FFF'; ctx.strokeRect(W-20-barW, 50, barW, barH);
+    ctx.fillStyle = '#FFF'; ctx.textAlign = 'right';
+    ctx.fillText(LANG==='ja'?'対戦者':'RIVAL', W-20, 46);
+
+    // Combo
+    if(combo > 1){
+      ctx.fillStyle = '#D4A947';
+      ctx.font = 'bold 18px Georgia';
+      ctx.textAlign = 'center';
+      ctx.fillText(combo + ' COMBO!', W/2, H*0.42);
+    }
+
+    // Hit effects
+    hitEffects = hitEffects.filter(e=>{
+      e.t--;
+      e.y -= 1.5;
+      ctx.fillStyle = e.color;
+      ctx.globalAlpha = e.t / 20;
+      ctx.font = 'bold 20px Georgia';
+      ctx.textAlign = 'center';
+      ctx.fillText(e.text, e.x, e.y);
+      ctx.globalAlpha = 1;
+      return e.t > 0;
+    });
+
+    // Controls hint
+    if(phase === 0){
+      ctx.fillStyle = 'rgba(44,24,16,0.6)';
+      const hintY = H*0.88;
+      ctx.fillRect(0, hintY-15, W, 40);
+      ctx.fillStyle = '#D4A947'; ctx.font = '13px Georgia'; ctx.textAlign = 'center';
+      ctx.fillText(LANG==='ja'?'👊 タップ = 攻撃　　🛡 スワイプ = 防御':'👊 Tap = Attack　　🛡 Swipe = Defend', W/2, hintY+5);
+    }
+
+    ctx.restore();
+    animId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// ═══════════════════════════════════════════
+//  Init
+// ═══════════════════════════════════════════
+drawTitleBG();
+</script>
+</body>
+</html>
